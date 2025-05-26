@@ -17,24 +17,32 @@ if __name__ == '__main__':
     Session = sessionmaker(bind=engine)
     session = Session()
 
+    company1 = Company("TechCorp", founding_year=1995)
+    dev1 = Dev("Alice")
+    freebie1 = company1.give_freebie(dev1, "Laptop Sticker", 5)
 
-    company1 = Company("MediTech")
-    dev1 = Dev("Brian")
-    freebie1 = Freebie("Water bottle", 1000)
-    freebie1.company = company1
-    freebie1.dev = dev1
+    session.add_all([company1, dev1, freebie1])
+    session.commit()
 
-    # session.add_all([company1,dev1,freebie1])
-    # session.commit()
+    print("Freebie Created:", freebie1.print_details()) 
 
-    print(freebie1.dev)
-    print(freebie1.company)
+    company2 = Company("OldCo", founding_year=1980)
+    session.add(company2)
+    session.commit()
+    print("Oldest Company:", Company.oldest_company(session))
 
-     # utilities
-    def get_dev(name):
-        return session.query(Dev).filter_by(name=name).first()
-   
+    dev2 = Dev("Bob")
+    session.add(dev2)
+    session.commit()
+
+    dev1.give_away(dev2, freebie1)
+    session.commit()
+    print("After Giveaway:", freebie1.print_details())
+
+    print("\nAll Freebies:")
+    for f in session.query(Freebie).all():
+        print(f.print_details())
     
     
 
-    # import ipdb; ipdb.set_trace()
+    import ipdb; ipdb.set_trace()
