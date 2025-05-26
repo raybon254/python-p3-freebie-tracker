@@ -6,6 +6,11 @@ from models import Base
 
 from models import Company, Dev, Freebie
 
+# utilities
+def get_dev(name):
+    return session.query(Dev).filter_by(name=name).first()
+
+
 if __name__ == '__main__':
     engine = create_engine('sqlite:///freebies.db')
     Base.metadata.create_all(engine)
@@ -24,6 +29,10 @@ if __name__ == '__main__':
 
     print(freebie1.dev)
     print(freebie1.company)
+
+     # utilities
+    def get_dev(name):
+        return session.query(Dev).filter_by(name=name).first()
    
     
     

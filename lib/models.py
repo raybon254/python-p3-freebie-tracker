@@ -19,7 +19,22 @@ class Company(Base):
 
     def __init__(self,name,founding_year=None):
         self.name = name
-        self.founding_year = datetime.now().year
+        self.founding_year = founding_year if founding_year is not None else datetime.now().year
+
+
+    # Aggregate methods
+
+    def give_freebie(self, dev, item_name, value):
+        if not isinstance(dev, Dev):
+            raise ValueError("Expected a Dev instance.")
+        freebie = Freebie(item_name=item_name, value=value)
+        freebie.company = self
+        freebie.dev = dev
+        return freebie
+    
+    @classmethod
+    def oldest_company(cls,session):
+        return session.query(cls).order_by(cls.founding_year.asc()).first()
 
     def __repr__(self):
         return f'<Company {self.name}>'
@@ -32,6 +47,22 @@ class Dev(Base):
 
     def __init__(self,name):
         self.name = name
+
+   
+    def received_one(self, item_name):
+        return any(freebie.item_name == item_name for freebie in self.freebies)
+
+    
+    def give_away(self, dev, freebie):
+        if not isinstance(dev, Dev):
+            raise ValueError("Dev instance not found.")
+        if not isinstance(freebie, Freebie):
+            raise ValueError("Freebie instance not found.")
+        if freebie.dev != self:
+            raise ValueError("Freebie that doesn't belong to this dev can't be given away.")
+        freebie.dev = dev
+
+
         
     def __repr__(self):
         return f'<Dev {self.name}>'
@@ -54,6 +85,11 @@ class Freebie(Base):
     def __init__(self,item_name,value):
         self.item_name = item_name
         self.value = value
+   
+    # Aggregate methods
+    def print_details(self):
+        return f"{self.dev.name} owns a {self.item_name} from {self.company.name}."
+        
     
 
 
