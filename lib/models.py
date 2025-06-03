@@ -1,7 +1,7 @@
-from sqlalchemy import ForeignKey, Column, Integer, String, MetaData
+from sqlalchemy import ForeignKey, Column, Integer, String, MetaData, Table
 from sqlalchemy.orm import relationship, backref
 from datetime import datetime
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 convention = {
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
@@ -10,12 +10,21 @@ metadata = MetaData(naming_convention=convention)
 
 Base = declarative_base(metadata=metadata)
 
+# relations
+company_dev = Table('company_dev', Base.metadata,
+    Column('company_id', ForeignKey('companies.id'), primary_key=True),
+    Column('dev_id', ForeignKey('devs.id'), primary_key=True)
+)
+
+
 class Company(Base):
     __tablename__ = 'companies'
 
     id = Column(Integer(), primary_key=True)
     name = Column(String())
     founding_year = Column(Integer())
+
+    devs = relationship('Dev', secondary='company_dev', back_populates='companies')
 
     def __init__(self,name,founding_year=None):
         self.name = name
@@ -27,9 +36,7 @@ class Company(Base):
     def give_freebie(self, dev, item_name, value):
         if not isinstance(dev, Dev):
             raise ValueError("Expected a Dev instance.")
-        freebie = Freebie(item_name=item_name, value=value)
-        freebie.company = self
-        freebie.dev = dev
+        freebie = Freebie(item_name=item_name, value=value, company=self, dev=dev)
         return freebie
     
     @classmethod
@@ -44,6 +51,9 @@ class Dev(Base):
 
     id = Column(Integer(), primary_key=True)
     name= Column(String())
+
+    companies = relationship('Company', secondary='company_dev', back_populates='devs')
+
 
     def __init__(self,name):
         self.name = name
@@ -82,9 +92,11 @@ class Freebie(Base):
     company = relationship("Company", backref="freebies")
     dev = relationship("Dev", backref="freebies")
 
-    def __init__(self,item_name,value):
+    def __init__(self,item_name,value,company,dev):
         self.item_name = item_name
         self.value = value
+        self.company = company
+        self.dev = dev
    
     # Aggregate methods
     def print_details(self):
